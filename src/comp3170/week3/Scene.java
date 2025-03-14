@@ -12,6 +12,7 @@ import static org.lwjgl.opengl.GL15.glBindBuffer;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.joml.Vector2f;
 
 import comp3170.GLBuffers;
 import comp3170.Shader;
@@ -28,8 +29,19 @@ public class Scene {
 	private int indexBuffer;
 	private Vector3f[] colours;
 	private int colourBuffer;
+	
+	private Matrix4f modelMatrix = new Matrix4f();
+	private Matrix4f transMatrix = new Matrix4f();
+	private Matrix4f rotMatrix = new Matrix4f();
+	private Matrix4f scalMatrix = new Matrix4f();
 
 	private Shader shader;
+	
+	final private Vector3f offset = new Vector3f(0.5f, 0f, 0f);
+	final private float movement_speed = 0.1f;
+	final private Vector3f scale = new Vector3f(0.1f, 0.1f, 0f); // TRS order
+	final private float rotation_rate = 1f;
+	final private float scale_rate = 0.1f;
 
 	public Scene() {
 
@@ -78,6 +90,20 @@ public class Scene {
 
 		indexBuffer = GLBuffers.createIndexBuffer(indices);
 
+		
+		//modelMatrix.translate(offset).rotateZ(rotation).scale(scale);
+		modelMatrix.translate(offset).scale(scale);
+		
+		//modelMatrix.mul(transMatrix).mul(rotMatrix).mul(scalMatrix);
+	}
+	
+	public void update(float deltaTime) {
+		
+		float movement = movement_speed * deltaTime;
+		float rotation = rotation_rate * deltaTime;
+		float scale = (float)Math.pow(scale_rate, deltaTime); // scaling
+		modelMatrix.translate(0.0f, movement_speed, 0.0f).rotateZ(rotation);
+		//modelMatrix.translate(0.0f, movement_speed, 0.0f).rotateZ(rotation).scale(scale);  // scaling
 	}
 
 	public void draw() {
@@ -85,6 +111,7 @@ public class Scene {
 		shader.enable();
 		// set the attributes
 		shader.setAttribute("a_position", vertexBuffer);
+		shader.setUniform("u_modelMatrix", modelMatrix);
 		shader.setAttribute("a_colour", colourBuffer);
 
 		// draw using index buffer
@@ -134,7 +161,10 @@ public class Scene {
 
 	public static Matrix4f rotationMatrix(float angle, Matrix4f dest) {
 
-		// TODO: Your code here
+		dest.m00((float) Math.cos(angle));
+		dest.m01((float) Math.sin(angle));
+		dest.m10((float) Math.sin(-angle));
+		dest.m11((float) Math.cos(angle));
 
 		return dest;
 	}
@@ -151,7 +181,8 @@ public class Scene {
 
 	public static Matrix4f scaleMatrix(float sx, float sy, Matrix4f dest) {
 
-		// TODO: Your code here
+		dest.m00(sx);
+		dest.m11(sy);
 
 		return dest;
 	}
